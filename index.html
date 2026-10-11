@@ -341,6 +341,15 @@ body:not(.ads-on) .adslot{display:none!important}
   </div>
 </div>
 <script>
+/* GA4 custom events (Games by Zaib). Safe: never throws, light (no per-frame calls, dedupe + per-page cap). */
+var ZT_N = 0, ZT_K = '', ZT_KT = 0, ZT_T = 0, ZT_S = 0, ZT_H = 0;
+function zt(n, p) { try { var k = n + JSON.stringify(p || 0), t = Date.now(); if (ZT_N > 150 || (k === ZT_K && t - ZT_KT < 500)) return; ZT_N++; ZT_K = k; ZT_KT = t; window.gtag && gtag('event', n, Object.assign({ game_id: 'bus-bonanza' }, p)); } catch (e) {} }
+function ztPlay(on) { try { var t = Date.now(); if (ZT_S) { ZT_T += (t - ZT_S) / 1e3; ZT_S = 0; } if (on) ZT_S = t; } catch (e) {} }
+function ztPing(r) { try { ztPlay(false); if (ZT_T >= 1) zt('play_time', { play_time: Math.round(ZT_T), reason: r }); ZT_T = 0; } catch (e) {} }
+try {
+  document.addEventListener('visibilitychange', function () { if (document.hidden) { ZT_H = !!ZT_S; ztPing('page_hide'); } else if (ZT_H) { ZT_H = 0; ztPlay(true); } });
+  document.addEventListener('click', function (e) { try { var a = e.target && e.target.closest && e.target.closest('a[href]'); if (!a) return; var u = new URL(a.href, location.href); if (!/^https?:$/.test(u.protocol)) return; if (u.host === location.host || /(^|\.)zaibgames\.com$/.test(u.host)) { if (u.pathname.indexOf('/bus-bonanza/') !== 0) zt('more_games_click', { link_url: u.href }); } else zt('outbound_click', { link_url: u.href, link_domain: u.host, outbound: true }); } catch (err) {} }, true);
+} catch (e) {}
 // ================= utilities & save =================
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -2004,7 +2013,7 @@ function modal(title, text, btns) {
 }
 function openBuyBooster(id) {
   const B = BOOST[id];
-  if (SAVE.coins >= B.price) modal(B.name, `${B.desc}.<br><br>Buy 1 for <b>${B.price} coins</b>?`, [['Cancel', 'grey', null], ['Buy', 'gold', () => { addCoins(-B.price); SAVE.boosters[id] = 1; saveGame(); SFX.buy(); updBoostUI(); useBooster(id); }]]);
+  if (SAVE.coins >= B.price) modal(B.name, `${B.desc}.<br><br>Buy 1 for <b>${B.price} coins</b>?`, [['Cancel', 'grey', null], ['Buy', 'gold', () => { addCoins(-B.price); zt('spend_virtual_currency', { virtual_currency_name: 'coins', value: B.price, item_name: B.name, item_category: 'booster' }); SAVE.boosters[id] = 1; saveGame(); SFX.buy(); updBoostUI(); useBooster(id); }]]);
   else modal(B.name, `${B.desc}.<br><br>You need <b>${B.price} coins</b>. Win levels and play the Daily Challenge to earn more!`, [['OK', 'gold', null]]);
 }
 
@@ -2041,6 +2050,7 @@ function startDaily() {
 function beginLevel(D, opts) {
   hideAll(); $('hud').classList.remove('hidden'); G.state = 'play'; GM.demo = false; hudCache = '';
   startLevel(D, opts);
+  zt('game_start', { mode: opts.daily ? 'daily' : 'levels', level: D.n }); zt('level_start', { level: D.n, mode: opts.daily ? 'daily' : 'levels', level_type: D.m }); if (GM.tutorial) zt('tutorial_begin', { tutorial_id: GM.tutorial.id }); ztPlay(true);
   $('lvlChip').innerHTML = (opts.daily ? 'Daily Challenge' : 'Level ' + D.n) + `<small>${D.m === 'lot' ? 'PARKING LOT' : 'CROWD RUSH'}${D.hard ? ' &middot; HARD' : ''}${D.t ? ' &middot; TIMED' : ''}</small>`;
   updBoostUI(); coinsUI(); setHint(null);
   playMusic(D.t ? 'timed' : ['play1', 'play2', 'play3'][Math.floor((D.n - 1) / 10) % 3]);
@@ -2050,8 +2060,9 @@ function levelWon() {
   const n = G.cur.n; let stars = 3; if (GM.bumps >= 3) stars--; if (GM.cont > 0) stars--; stars = Math.max(1, stars);
   let coins = 15 + stars * 5; if (GM.D.hard) coins *= 2; coins += GM.vipBonus;
   if (G.cur.daily) { const today = todayStr(); if (!SAVE.daily.done || SAVE.daily.date !== today) { coins += 150; const y = todayStr(new Date(Date.now() - 864e5)); SAVE.daily.streak = SAVE.daily.last === y ? SAVE.daily.streak + 1 : 1; SAVE.daily.last = today; } SAVE.daily.date = today; SAVE.daily.done = true; }
-  else { const prev = SAVE.stars[n] || 0; if (stars > prev) SAVE.stars[n] = stars; if (SAVE.lvl <= n) SAVE.lvl = Math.min(LEVELS.length + 1, n + 1); }
+  else { const prev = SAVE.stars[n] || 0; if (stars > prev) { SAVE.stars[n] = stars; zt('post_score', { score: stars, level: n, mode: 'levels' }); } if (SAVE.lvl <= n) SAVE.lvl = Math.min(LEVELS.length + 1, n + 1); }
   SAVE.stats.wins++; addCoins(coins); saveGame();
+  zt('level_end', { level: n, mode: G.cur.daily ? 'daily' : 'levels', success: true, stars: stars }); zt('earn_virtual_currency', { virtual_currency_name: 'coins', value: coins, item_name: G.cur.daily ? 'daily_win' : 'level_win' }); ztPing('level_clear');
   SFX.win(); confetti(90); G.state = 'result'; vibrate([30, 40, 30]);
   setTimeout(() => {
     $('resTitle').textContent = G.cur.daily ? 'Daily Complete!' : ['', 'Level Complete!', 'Great Job!', 'Perfect!'][stars];
@@ -2066,13 +2077,15 @@ function levelWon() {
 }
 function levelFailed(kind) {
   G.state = 'result'; SFX.fail(); vibrate(80);
+  try { const L = GM.L, S = GM.S; let done = 0; if (GM.mode === 'lot') done = L.Q.length - (S.q.length - S.qi); else { for (let j = 0; j < S.bi; j++) done += L.buses[j].cap; done += S.fill; }
+    zt('level_end', { level: G.cur.n, mode: G.cur.daily ? 'daily' : 'levels', success: false, reason: kind }); zt('game_over', { score: done, level: G.cur.n, mode: G.cur.daily ? 'daily' : 'levels', reason: kind }); ztPing('game_over'); } catch (e) { }
   const canSlot = kind !== 'time' && GM.S.k < BAYS_MAX, price = 100;
   setTimeout(() => {
     $('resTitle').textContent = kind === 'time' ? 'Time\'s Up!' : GM.mode === 'lot' ? 'Out of Bays!' : 'Bench is Full!';
     $('resStars').innerHTML = '';
     $('resStats').innerHTML = `<div class="help" style="text-align:center">${kind === 'time' ? 'The clock ran out.' : GM.mode === 'lot' ? 'Every bay is taken and nobody in line matches.' : 'The waiting bench filled up.'}<br>Continue for <b>${price} coins</b>${kind === 'time' ? ' (+30 seconds)' : canSlot ? ' (+1 extra space)' : ''}?</div>`;
     const btns = [];
-    if (kind === 'time' || canSlot) btns.push([`Continue  (${price})`, 'gold big', () => { if (SAVE.coins < price) { toast('Not enough coins'); SFX.deny(); return; } addCoins(-price); GM.cont++; if (kind === 'time') GM.timeLeft += 30; else GM.S.k++; GM.status = 'play'; hideAll(); G.state = 'play'; applyVolumes(); SFX.slot(); }]);
+    if (kind === 'time' || canSlot) btns.push([`Continue  (${price})`, 'gold big', () => { if (SAVE.coins < price) { toast('Not enough coins'); SFX.deny(); return; } addCoins(-price); zt('spend_virtual_currency', { virtual_currency_name: 'coins', value: price, item_name: 'continue' }); ztPlay(true); GM.cont++; if (kind === 'time') GM.timeLeft += 30; else GM.S.k++; GM.status = 'play'; hideAll(); G.state = 'play'; applyVolumes(); SFX.slot(); }]);
     btns.push(['Retry', 'mint', () => G.cur.daily ? startDaily() : startGame(G.cur.n)], ['Map', 'grey', openMap]);
     resButtons(btns); show('sResult'); applyVolumes();
   }, 700);
@@ -2151,9 +2164,9 @@ function buildShop() {
   }
 }
 function shopClick(it) {
-  if (shopTab === 'boost') { if (SAVE.coins < it.price) { toast('Not enough coins'); SFX.deny(); return; } addCoins(-it.price); SAVE.boosters[it.id] = (SAVE.boosters[it.id] || 0) + 1; saveGame(); SFX.buy(); buildShop(); return; }
+  if (shopTab === 'boost') { if (SAVE.coins < it.price) { toast('Not enough coins'); SFX.deny(); return; } addCoins(-it.price); zt('spend_virtual_currency', { virtual_currency_name: 'coins', value: it.price, item_name: it.name, item_category: 'booster' }); SAVE.boosters[it.id] = (SAVE.boosters[it.id] || 0) + 1; saveGame(); SFX.buy(); buildShop(); return; }
   const owned = shopTab === 'skins' ? SAVE.skins : SAVE.themes;
-  if (!it.own) { if (SAVE.coins < it.price) { toast('Not enough coins'); SFX.deny(); return; } addCoins(-it.price); owned.push(it.id); SFX.buy(); confetti(30, VW / 2, VH / 2); }
+  if (!it.own) { if (SAVE.coins < it.price) { toast('Not enough coins'); SFX.deny(); return; } addCoins(-it.price); zt('spend_virtual_currency', { virtual_currency_name: 'coins', value: it.price, item_name: it.name, item_category: shopTab }); owned.push(it.id); SFX.buy(); confetti(30, VW / 2, VH / 2); }
   else SFX.click();
   if (shopTab === 'skins') SAVE.skin = it.id; else { SAVE.theme = it.id; if (GM.on) buildGround(); }
   saveGame(); buildShop();
@@ -2201,7 +2214,7 @@ function tutAfterTap() {
   if (T.taps >= T.max) endTutorial();
 }
 function tutBlocked() { const T = GM.tutorial; if (T) { T.text = 'Blocked! Try a bus with a clear road ahead.'; T.sug = null; } }
-function endTutorial() { const T = GM.tutorial; if (!T) return; SAVE.tut[T.id] = 1; saveGame(); GM.tutorial = null; setHint(null); $('hand').classList.add('hidden'); }
+function endTutorial() { const T = GM.tutorial; if (!T) return; zt('tutorial_complete', { tutorial_id: T.id }); SAVE.tut[T.id] = 1; saveGame(); GM.tutorial = null; setHint(null); $('hand').classList.add('hidden'); }
 function tutUpdate(dt) {
   const T = GM.tutorial, hand = $('hand');
   if (!T || G.state !== 'play') { hand.classList.add('hidden'); if (!T && !GM.heliMode && !GM.demo) { } return; }
@@ -2253,10 +2266,10 @@ function init() {
   bind('bMapBack', () => { SFX.click(); openTitle(); }); bind('bMapShop', () => { SFX.click(); openShop(); }); bind('bMapSet', () => { SFX.click(); openSettings('map'); }); bind('dailyCard', () => { SFX.click(); startDaily(); });
   $('mapList').addEventListener('click', e => { const n = e.target.closest('.node'); if (!n) return; ensureAudio(); const k = +n.dataset.n; if (k > SAVE.lvl) { SFX.deny(); toast('Finish level ' + SAVE.lvl + ' first'); return; } SFX.click(); startGame(k); });
   bind('bShopBack', closeShop); for (const t of document.querySelectorAll('.tab')) t.addEventListener('click', () => { SFX.click(); shopTab = t.dataset.tab; buildShop(); });
-  bind('bFreeCoins', () => { const today = todayStr(); if (SAVE.lastGift === today) return; SAVE.lastGift = today; addCoins(100); SFX.coin(); confetti(30, VW / 2, VH / 3); openShop(); });
+  bind('bFreeCoins', () => { const today = todayStr(); if (SAVE.lastGift === today) return; SAVE.lastGift = today; addCoins(100); zt('earn_virtual_currency', { virtual_currency_name: 'coins', value: 100, item_name: 'daily_gift' }); SFX.coin(); confetti(30, VW / 2, VH / 3); openShop(); });
   bind('bSetBack', closeSettings); bind('bHelpBack', closeHelp);
-  for (const t of document.querySelectorAll('.tog')) t.addEventListener('click', () => { ensureAudio(); const k = t.dataset.set; SAVE.settings[k] = !SAVE.settings[k]; saveGame(); updSettings(); applyVolumes(); SFX.click(); if (k === 'vibe') vibrate(30); });
-  for (const s of document.querySelectorAll('.seg')) for (const b of s.querySelectorAll('button')) b.addEventListener('click', () => { SAVE.settings[s.dataset.seg] = b.dataset.v; saveGame(); updSettings(); SFX.click(); if (s.dataset.seg === 'gfx') { QUALITY.lvl = 2; applyQuality(); } });
+  for (const t of document.querySelectorAll('.tog')) t.addEventListener('click', () => { ensureAudio(); const k = t.dataset.set; SAVE.settings[k] = !SAVE.settings[k]; zt('settings_change', { setting: k, value: String(SAVE.settings[k]) }); saveGame(); updSettings(); applyVolumes(); SFX.click(); if (k === 'vibe') vibrate(30); });
+  for (const s of document.querySelectorAll('.seg')) for (const b of s.querySelectorAll('button')) b.addEventListener('click', () => { SAVE.settings[s.dataset.seg] = b.dataset.v; zt('settings_change', { setting: s.dataset.seg, value: String(b.dataset.v) }); saveGame(); updSettings(); SFX.click(); if (s.dataset.seg === 'gfx') { QUALITY.lvl = 2; applyQuality(); } });
   bind('bReset', () => modal('Reset progress?', 'This erases all levels, stars, coins and purchases.', [['Cancel', 'grey', null], ['Reset', 'pink', () => { localStorage.removeItem(SAVE_KEY); SAVE = DEF_SAVE(); saveGame(); updSettings(); applyVolumes(); toast('Progress reset'); }]]));
   bind('bPause', () => { SFX.click(); pauseGame(); }); bind('bResume', () => { SFX.click(); resumeGame(); }); bind('bRestart', () => { SFX.click(); G.cur.daily ? startDaily() : startGame(G.cur.n); }); bind('bPauseMap', () => { SFX.click(); openMap(); });
   bind('bPSound', () => { SAVE.settings.sound = !SAVE.settings.sound; saveGame(); applyVolumes(); updPauseBtns(); SFX.click(); }); bind('bPMusic', () => { SAVE.settings.music = !SAVE.settings.music; saveGame(); applyVolumes(); updPauseBtns(); SFX.click(); }); bind('bPHelp', () => { SFX.click(); openHelp('paused'); });
