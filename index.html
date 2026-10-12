@@ -1150,7 +1150,7 @@ function noise(t, d, v, type, freq, dest, f2) {
   const g = c.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d); s.connect(f); f.connect(g); g.connect(dest || AU.sfx); s.start(t, Math.random() * 0.5); s.stop(t + d + 0.03);
 }
 function now() { return AU.ctx && SAVE.settings.sound && !GM.demo ? AU.ctx.currentTime : -1; }
-function vibrate(p) { if (SAVE.settings.vibe && navigator.vibrate) try { navigator.vibrate(p); } catch (e) { } }
+function vibrate(p) { if (SAVE.settings.vibe && navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate(p); } catch (e) { } }
 const SFX = {
   click() { const t = now(); if (t < 0) return; tone(900, t, 0.05, 'square', 0.04); tone(1350, t + 0.03, 0.06, 'triangle', 0.08); },
   honk(v) { const t = now(); if (t < 0) return; v = v || 1; for (const f of [392, 494]) { tone(f, t, 0.22, 'square', 0.05 * v, null, f * 0.98, 0.01); tone(f / 2, t, 0.22, 'sawtooth', 0.03 * v); } },
