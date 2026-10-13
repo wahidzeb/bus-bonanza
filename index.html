@@ -137,6 +137,15 @@ button{font-family:inherit;cursor:pointer}
 <div id="sModal" class="screen dim hidden"><div class="panel"><h2 id="mT">Title</h2><div class="stars hidden" id="mS"></div><p id="mP"></p><div id="mB" style="display:flex;flex-direction:column;gap:12px"></div></div></div>
 <div id="toast"></div>
 <script>
+/* Canvas radius guard: clamps negative/NaN radii so a tiny or 0-size viewport can never throw IndexSizeError. */
+(function () { try { var P = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype; if (!P || P.__zgRG) return; P.__zgRG = 1;
+  function c(v) { v = +v; return v > 0 ? v : 0; }
+  var a = P.arc, e = P.ellipse, t = P.arcTo, g = P.createRadialGradient;
+  if (a) P.arc = function (x, y, r, s, en, cc) { return a.call(this, x, y, c(r), s, en, cc); };
+  if (e) P.ellipse = function (x, y, rx, ry, ro, s, en, cc) { return e.call(this, x, y, c(rx), c(ry), ro, s, en, cc); };
+  if (t) P.arcTo = function (x1, y1, x2, y2, r) { return t.call(this, x1, y1, x2, y2, c(r)); };
+  if (g) P.createRadialGradient = function (x0, y0, r0, x1, y1, r1) { return g.call(this, +x0 || 0, +y0 || 0, c(r0), +x1 || 0, +y1 || 0, c(r1)); };
+} catch (e) {} })();
 /* GA4 custom events (Games by Zaib). Safe: never throws, light (no per-frame calls, dedupe + per-page cap). */
 var ZT_N = 0, ZT_K = '', ZT_KT = 0, ZT_T = 0, ZT_S = 0, ZT_H = 0;
 function zt(n, p) { try { var k = n + JSON.stringify(p || 0), t = Date.now(); if (ZT_N > 150 || (k === ZT_K && t - ZT_KT < 500)) return; ZT_N++; ZT_K = k; ZT_KT = t; window.gtag && gtag('event', n, Object.assign({ game_id: 'bus-bonanza' }, p)); } catch (e) {} }
