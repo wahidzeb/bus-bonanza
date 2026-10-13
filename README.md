@@ -1,32 +1,20 @@
 # Bus Bonanza 🚌
 
-**A colorful bus-parking passenger puzzle for mobile browsers. Game by Zaib.**
+**A glossy traffic-jam passenger puzzle for mobile browsers. Game by Zaib.**
 
 ▶ **Play:** https://zaibgames.com/bus-bonanza/
 
 ![Title](title.png)
 ![Gameplay](screenshot.png)
 
-The parking lot is jammed. Tap a bus to drive it out to the station, and the passengers waiting in line hop onto the bus that matches their color. A full bus leaves and frees its bay. If every bay is taken and nobody in line can board, you lose.
+A long, winding queue of passengers waits in colour runs. Below it, a packed lot holds cars, vans and buses parked at all kinds of angles, each with an arrow. Tap a vehicle and it drives out the way its arrow points, as long as nothing is in the way. Blocked vehicles bump and shake. A vehicle that gets out drives around the ring road into a free parking spot, and passengers of its colour walk over and board. Full vehicles leave and free their spot. If every spot fills up and nobody can board, you're out of space.
 
 ## Features
-- **Pseudo-3D look:** buses, people, garages and scenery are shaded, glossy and drawn in perspective. Buses follow smooth driving paths with squash and bounce, passengers walk and cheer, and there's confetti, sparkles and combo pop-ups.
-- **120 levels, all checked by a solver:** levels are generated ahead of time and only kept if a solver bot can win them without boosters. A difficulty rating keeps the curve fair. There is also a level map with stars.
-- **Two modes:** *Parking Lot*, where you tap buses out of a crowded lot, and *Crowd Rush*, where you tap passengers who have a clear path to send them to the arriving bus. Passengers with the wrong color wait on a bench.
-- **Mechanics added as you go:** 4-, 6- and 10-seat buses, mystery buses, padlocks and keys, ice-frozen buses, garages that release new buses, VIP passengers and timed levels.
-- **Daily Challenge:** a new level each day, built and solver-checked in your browser. It pays a 150-coin bonus and tracks your streak.
-- **Boosters:** Extra Bay, Undo, Shuffle, Magnet and Helicopter (airlifts any bus or passenger).
-- **Shop:** 7 bus skins (Classic, Retro Cream, Racer, Candy Pop, Double Decker, Neon Glow, Golden VIP), 4 themes (City, Beach, Snow, Night) and boosters, plus a free daily coin gift.
-- **Sound:** music and sound effects (honks, chimes, engines) are generated with WebAudio.
-- **Screens:** title, level map, shop, settings (sound, music, vibration, graphics, reset), how-to-play, tutorial hand hints, an intro card for each new mechanic, pause, and win/fail results with a continue option.
-- **Tech:** the whole game is one self-contained HTML file. It is portrait-first but also works in landscape, runs at 60 fps using delta time, lowers graphics quality automatically if needed, pauses when the tab is hidden and saves progress in localStorage. There are no ads.
-
-## Controls
-| Action | Touch / mouse | Keyboard |
-|---|---|---|
-| Drive a bus / send a passenger | Tap it | – |
-| Boosters | Buttons at the bottom (right side in landscape) | 1–5, U/Z = undo |
-| Pause | ⏸ | Esc / P |
-
-## Credits
-Game, art, music and code by **Zaib**. All names, art and sounds are original.
+- **Look:** pseudo-3D canvas art. Vehicles have bevels, gloss, glass, wheels and soft shadows. Passengers are chunky, bob as they walk and hop when they board. You also get dust trails, sparkles, confetti and generated WebAudio sounds and music.
+- **Vehicles:** cars hold 4, vans 6 and buses 10. They can face any angle (axis, 45°, 30°/60° and 15° steps).
+- **Parking row:** 1 VIP spot, 4 open spots and 3 extra spots. You can open the extra spots with coins for a level. There are no ads.
+- **Power-ups (with count badges and coin purchases):** *VIP* flies any vehicle to the VIP spot, *Arrange* sorts the queue, and *Jumble* reshuffles the lot's colours. Undo has its own count.
+- **Hundreds of levels:** a seeded procedural generator builds each level by reverse construction, so every level is solvable by design. A solver checks levels 1–300 automatically (`bus-test/solv.js`). The difficulty curve rises smoothly with breather and spike levels. Themes rotate every 5 levels: beach, city, snow and night.
+- **Screens:** a lose screen with undo/continue/retry, level select with stars, a tutorial, pause and settings.
+- **Saves:** stored in localStorage and merged onto defaults. Old v1 saves are migrated (level, stars, coins, settings and boosters are kept), and damaged saves are handled without crashing.
+- **Tech:** one self-contained HTML file. It is portrait-first and also supports landscape and desktop. Vehicle and queue sprites are cached, graphics quality adapts on slow devices, and it has its own PWA manifest and service worker.
