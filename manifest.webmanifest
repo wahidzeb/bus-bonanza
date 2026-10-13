@@ -1,0 +1,42 @@
+{
+  "id": "/bus-bonanza/",
+  "name": "Bus Bonanza",
+  "short_name": "Bus Bonanza",
+  "description": "Bus Bonanza by Zaib \u2014 a colorful bus parking puzzle: tap buses out of a jammed lot, match passengers by color, 150 levels, daily challenge, boosters and skins.",
+  "lang": "en",
+  "start_url": "/bus-bonanza/?source=pwa",
+  "scope": "/bus-bonanza/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#3d8fe8",
+  "background_color": "#3d8fe8",
+  "categories": [
+    "games"
+  ],
+  "icons": [
+    {
+      "src": "/bus-bonanza/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/bus-bonanza/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/bus-bonanza/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/bus-bonanza/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
